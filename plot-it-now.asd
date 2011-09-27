@@ -12,5 +12,6 @@
   :components
   ((:file "package")
    (:file "iterable-range")
+   (:file "transform")
    (:file "plot-it-now"))
   :serial t)

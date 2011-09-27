@@ -3,8 +3,13 @@
 ;;;; to plot against. It can be backed against a list, or another more abstract type.
 (in-package :pin)
 
+
 (defgeneric get-iterator (ir)
-  (:documentation "Creates an iterator that can be used to iterate non-destructively over the range."))
+  (:documentation "Creates an iterator that can be used to iterate
+  non-destructively over the range."))
+
+(defgeneric copy-iterator (ir)
+  (:documentation "Copies an iterator, so that it can be used later"))
 
 (defclass ir-iterator ()
   ())
@@ -123,3 +128,11 @@ or nil if there is no next element"))
       curr
       (setf curr (+ (linear-range-min range) (* index (linear-range-step range))))
       (incf index))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; Reference Type
+(deftype iterable-range ()
+  `(or (and (satisfies listp)
+	    (not (satisfies null)))
+       (satisfies arrayp)
+       linear-range))
