@@ -32,4 +32,4 @@
 (defun data->window-y (tr y h)
   "Transform a y-coordinate from data-space to window-space"
   (with-slots (min-y max-y) tr
-    (- h (* h (/ (- y min-y) (- max-y min-y))))))
+    (* h (/ (- y min-y) (- max-y min-y)))))

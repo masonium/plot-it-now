@@ -9,13 +9,43 @@
 (defmethod plots ((x (eql nil)) y-datas &key lines point-size )
   (plots (iota (apply #'max (mapcar #'length y-datas))) y-datas))
 
+(defun plot-lines (tr-x-points tr-y-point-lists colors)
+  "Plot a line graph from X to Y, for each y-series in TR-Y-POINT-LISTS"
+  (mapc
+   #'(lambda (y-data color)
+       (mapc #'(lambda (x1 x2 y1 y2)
+		 (when (and y1 y2)
+		   (vecto:set-rgb-stroke (sdl:r color) (sdl:g color) (sdl:b color))
+		   (vecto:move-to x1 y1)
+		   (vecto:line-to x2 y2)
+		   (vecto:stroke)))
+	     tr-x-points (cdr tr-x-points) y-data (cdr y-data)))
+   tr-y-point-lists colors))
+
+(defun plot-points (tr-x-points tr-y-point-lists colors point-size)
+  "Plot a scatter for each y series "
+  (mapc
+   #'(lambda (y-data color)
+       (mapc #'(lambda (x1 y1)
+		 (when y1
+		   (vecto:set-rgb-stroke (sdl:r color) (sdl:g color) (sdl:b color))
+		   (vecto:move-to x1 y1)
+		   (vecto:centered-circle-path x1 y1 point-size)
+		   (vecto:fill-path)))
+	     tr-x-points y-data))
+   tr-y-point-lists colors))
+
+(defun make-transform-for-data (x-data y-data-lists)
+  "Compute a proper data->screen transformation, based on the actual data"
+  (make-linear-transform
+   (%data-range x-data)
+   (list (apply #'min (mapcar (curry #'apply #'min) y-data-lists))
+	 (apply #'max (mapcar (curry #'apply #'max) y-data-lists)))))
+
 (defmethod plots (x-data y-data-lists &key (lines t) (point-size 0))
   (let* ((width 800)
 	 (height 600)
-	 (tr (make-linear-transform
-	      (%data-range x-data)
-	      (list (apply #'min (mapcar (curry #'apply #'min) y-data-lists))
-		    (apply #'max (mapcar (curry #'apply #'max) y-data-lists)))))
+	 (tr (make-transform-for-data x-data y-data-lists))
 	 (colors (mapcar #'(lambda (y)
 			     (declare (ignore y))
 			     (sdl:color :r (random 256) :g (random 256)
@@ -33,22 +63,12 @@
 		       y-data-lists)))
 		 #'(lambda ()
 		     (sdl:clear-display (sdl:color))
-		     (when lines
-		       (mapc
-			#'(lambda (y-data color)
-			    (mapc #'(lambda (x1 x2 y1 y2)
-				      (when (and y1 y2)
-					(sdl-gfx:draw-line-* x1 y1 x2 y2 :aa t :color color :clipping nil)))
-				  tr-x-points (cdr tr-x-points) y-data (cdr y-data)))
-			tr-y-point-lists colors))
-		     (when (> point-size 0)
-		       		       (mapc
-			#'(lambda (y-data color)
-			    (mapc #'(lambda (x1 y1)
-				      (when y1 
-					(sdl-gfx:draw-circle-* x1 y1 point-size :aa t :color color)))
-				  tr-x-points y-data))
-			tr-y-point-lists colors))
+		     (vecto:with-canvas (:width w :height h)
+		       (when lines
+			 (plot-lines tr-x-points tr-y-point-lists colors))
+		       (when (> point-size 0)
+			 (plot-points tr-x-points tr-y-point-lists colors point-size))
+		       (sdl:vecto->surface sdl:*default-display*))
 		     (sdl:update-display)))))
       (sdl:with-init ()
 	(sdl:window width height :title-caption "Line plot" :resizable t)

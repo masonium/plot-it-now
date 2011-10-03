@@ -8,7 +8,8 @@
   :author "Mason Smith <masonium@gmail.com>"
   :maintainer "Mason Smith <masonium@gmail.com>"
   :license "WTFPL"
-  :depends-on (:alexandria :iterate :lispbuilder-sdl :lispbuilder-sdl-gfx)
+  :depends-on (:alexandria :iterate :lispbuilder-sdl
+			   :vecto :lispbuilder-sdl-vecto)
   :components
   ((:file "package")
    (:file "iterable-range")
