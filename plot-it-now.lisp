@@ -35,17 +35,39 @@
 	     tr-x-points y-data))
    tr-y-point-lists colors))
 
-(defun make-transform-for-data (x-data y-data-lists)
+(defun make-transform-for-data (x-range y-range)
   "Compute a proper data->screen transformation, based on the actual data"
-  (make-linear-transform
-   (%data-range x-data)
-   (list (apply #'min (mapcar (curry #'apply #'min) y-data-lists))
-	 (apply #'max (mapcar (curry #'apply #'max) y-data-lists)))))
+  (make-linear-transform x-range y-range))
+
+(defvar +font-size+ 20)
+(setf +font-size+ 20)
+
+(defun plot-axes (y-range h tr)
+  (vecto:set-font (vecto:get-font "/home/mason/workspace/portfolio/ProggyClean.ttf") +font-size+)
+  (vecto:set-rgb-fill  0.8 0.8 0.8)
+  (vecto:set-rgb-stroke 0.8 0.8 0.8)
+  (let ((n 8))
+    (iterate (for i from 0 to n)
+	     (for data-y = (+ (first y-range)
+				 (/ (* i (- (second y-range) (first y-range)))
+				    n)))
+	     (for window-y = (data->window-y tr data-y h))
+	     (vecto:move-to 0 window-y)
+	     (vecto:line-to (linear-transform-max-x tr) window-y)
+	     (vecto:stroke)
+	     (vecto:draw-string
+	      (floor +font-size+ 2) window-y
+	      (format nil "~A" data-y)))))
 
 (defmethod plots (x-data y-data-lists &key (lines t) (point-size 0))
   (let* ((width 800)
 	 (height 600)
-	 (tr (make-transform-for-data x-data y-data-lists))
+	 (x-range
+	  (%data-range x-data))
+	 (y-range
+	  (list (apply #'min (mapcar (curry #'apply #'min) y-data-lists))
+		(apply #'max (mapcar (curry #'apply #'max) y-data-lists))))
+	 (tr (make-transform-for-data x-range y-range))
 	 (colors
 	  (if (= (length y-data-lists) 2)
 	      '((1.0 0.2 0.0) (0.2 0.3 0.9))
@@ -70,6 +92,7 @@
 			 (plot-lines tr-x-points tr-y-point-lists colors))
 		       (when (> point-size 0)
 			 (plot-points tr-x-points tr-y-point-lists colors point-size))
+		       (plot-axes y-range h tr)
 		       (sdl:vecto->surface sdl:*default-display*))
 		     (sdl:update-display)))))
       
