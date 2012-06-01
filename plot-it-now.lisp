@@ -58,6 +58,33 @@
 	     (vecto:draw-string
 	      (floor +font-size+ 2) window-y
 	      (format nil "~A" data-y)))))
+(defun hex-to-rgb (hexrgb)
+  (let* ((r (floor hexrgb #x10000))
+         (g (floor (mod hexrgb #x10000) #x100))
+         (b (mod hexrgb #x100)))
+    (list (/ r 255.0) (/ g 255.0) (/ b 255.0))))
+(defvar +colors-20+)
+(setf +colors-20+
+      (mapcar #'hex-to-rgb '(#xff0000
+                             #xff8c00
+                             #xffd700
+                             #x00bfff
+                             #x7fff00
+                             #xff00ff
+                             #xffff00
+                             #x7cfc00
+                             #xff4500
+                             #x00ff00
+                             #xffa500
+                             #x00ff7f
+                             #x00fa9a
+                             #x00ffff
+                             #x0000ff
+                             #x0000cd
+                             #x9400d3
+                             #x8b008b
+                             #x8b0000
+                             #xff0000)))
 
 (defmethod plots (x-data y-data-lists &key (lines t) (point-size 0))
   (let* ((width 800)
@@ -69,8 +96,8 @@
 		(apply #'max (mapcar (curry #'apply #'max) y-data-lists))))
 	 (tr (make-transform-for-data x-range y-range))
 	 (colors
-	  (if (= (length y-data-lists) 2)
-	      '((1.0 0.2 0.0) (0.2 0.3 0.9))
+	  (if (<= (length y-data-lists) 20)
+              (subseq +colors-20+ 0 (length y-data-lists))
 	      (mapcar #'(lambda (y)
 			  (declare (ignore y))
 			  (list (random 1.0) (random 1.0) (random 1.0)))
